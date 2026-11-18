@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oyunindir Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0b0f1a; --panel:#131a2b; --panel2:#1a2340; --line:#26325a;
+    --text:#e8ecf8; --muted:#8e9ac0; --accent:#7c5cff; --accent2:#00d4ff; --danger:#ff5470; --ok:#2ecc8f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#1b2450 0,transparent 60%),var(--bg);
+    color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+  a{color:var(--accent2)}
+  header{position:sticky;top:0;z-index:10;background:rgba(11,15,26,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .logo{font-weight:800;font-size:22px;letter-spacing:.5px;cursor:pointer;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .logo small{font-size:12px;border:1px solid var(--accent);color:var(--accent);-webkit-text-fill-color:var(--accent);border-radius:6px;padding:1px 6px;margin-left:6px}
+  .spacer{flex:1}
+  .who{color:var(--muted);font-size:14px}
+  button,.btn{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:9px 14px;border-radius:10px;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block}
+  button:hover,.btn:hover{border-color:var(--accent)}
+  .primary{background:linear-gradient(90deg,var(--accent),#5b8cff);border-color:transparent;color:#fff;font-weight:600}
+  .danger{color:var(--danger)}
+  main{max-width:1100px;margin:0 auto;padding:24px 16px 80px}
+  h1,h2{margin:0 0 16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:.2s}
+  .card:hover{transform:translateY(-3px);border-color:var(--accent)}
+  .thumb{aspect-ratio:16/9;background:var(--panel2) center/cover no-repeat}
+  .card .body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .card h3{margin:0;font-size:17px}
+  .muted{color:var(--muted);font-size:13px}
+  .excerpt{color:#c2c9e4;font-size:14px;line-height:1.5}
+  .card .actions{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .detail{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .detail img{width:100%;max-height:460px;object-fit:cover;display:block}
+  .detail .inner{padding:22px}
+  .detail .text{white-space:pre-wrap;line-height:1.7;color:#d5dbf2}
+  .links{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+  .links a{background:linear-gradient(90deg,var(--accent),#5b8cff);color:#fff;text-decoration:none;padding:13px 16px;border-radius:12px;font-weight:600;display:flex;justify-content:space-between;gap:10px}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px;z-index:50}
+  .overlay.open{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;width:100%;max-width:520px}
+  .modal.wide{max-width:680px}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+  input,textarea{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font-size:15px;font-family:inherit}
+  input:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  textarea{min-height:140px;resize:vertical}
+  .row{display:flex;gap:8px;margin-bottom:8px}
+  .row input:first-child{flex:0 0 32%}
+  .msg{margin-top:12px;font-size:14px;padding:10px 12px;border-radius:10px;display:none}
+  .msg.err{display:block;background:rgba(255,84,112,.12);color:var(--danger)}
+  .msg.ok{display:block;background:rgba(46,204,143,.12);color:var(--ok)}
+  .tabs{display:flex;gap:6px;margin-bottom:6px}
+  .tabs button{flex:1}
+  .tabs button.on{background:var(--accent);border-color:var(--accent)}
+  .empty{text-align:center;color:var(--muted);padding:60px 0}
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:30px 0}
+  .preview{max-width:100%;max-height:160px;border-radius:10px;margin-top:8px;display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="logo" id="logo">Oyunindir<small>PRO</small></div>
+    <div class="spacer"></div>
+    <span class="who" id="who"></span>
+    <button id="btnNew" class="primary" style="display:none">+ Yeni gönderi</button>
+    <button id="btnLogin">Giriş yap</button>
+    <button id="btnRegister" class="primary">Kayıt ol</button>
+    <button id="btnLogout" style="display:none">Çıkış</button>
+  </div>
+</header>
+
+<main id="app"></main>
+<footer>© <span id="year"></span> Oyunindir Pro</footer>
+
+<!-- Giriş / Kayıt -->
+<div class="overlay" id="authOv">
+  <div class="modal">
+    <div class="tabs">
+      <button id="tabLogin" class="on">Giriş yap</button>
+      <button id="tabReg">Kayıt ol</button>
+    </div>
+    <form id="authForm">
+      <div id="nameWrap" style="display:none">
+        <label for="aName">Kullanıcı adı</label>
+        <input id="aName" autocomplete="username" maxlength="30">
+      </div>
+      <label for="aEmail">E-posta</label>
+      <input id="aEmail" type="email" required autocomplete="email">
+      <label for="aPass">Şifre (en az 6 karakter)</label>
+      <input id="aPass" type="password" required minlength="6" autocomplete="current-password">
+      <div class="msg" id="authMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="submit" class="primary" id="authSubmit" style="flex:1">Giriş yap</button>
+        <button type="button" data-close>Kapat</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Gönderi ekle / düzenle -->
+<div class="overlay" id="postOv">
+  <div class="modal wide">
+    <h2 id="postTitleH">Yeni gönderi</h2>
+    <form id="postForm">
+      <label for="pTitle">Başlık</label>
+      <input id="pTitle" required maxlength="150">
+
+      <label for="pContent">Açıklama</label>
+      <textarea id="pContent"></textarea>
+
+      <label>Görsel (bilgisayardan yükle)</label>
+      <input id="pFile" type="file" accept="image/*">
+      <label for="pImgUrl">veya görsel bağlantısı</label>
+      <input id="pImgUrl" type="url" placeholder="https://...">
+      <img id="pPrev" class="preview" alt="">
+
+      <label>İndirme / dış bağlantılar</label>
+      <div id="linkRows"></div>
+      <button type="button" id="addLink">+ Bağlantı ekle</button>
+
+      <div class="msg" id="postMsg"></div>
+      <div style="display:flex;gap:8px;margin-top:18px">
+        <button type="submit" class="primary" id="postSubmit" style="flex:1">Yayınla</button>
+        <button type="button" data-close>İptal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ================== AYARLAR ================== */
+const SUPABASE_URL = "https://knnhgjdeyvsmrehssunc.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ACjXaJvo1H0IryRnTrNp2w_FHV-zP5x";
+
+// REKLAM: boş bir yere tıklanınca bu bağlantı yeni sekmede açılır.
+// Reklam ağından (Adsterra, PropellerAds, Monetag vb.) aldığın "direct link" adresini buraya yaz.
+const AD_URL = "";               // örn: "https://reklam-agi.com/direct/abc123"
+const AD_COOLDOWN_SEC = 120;     // aynı ziyaretçiye en fazla her 2 dakikada 1 reklam
+const ADMIN_SEES_ADS = false;    // admin için reklam kapalı
+/* ============================================= */
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = (id) => document.getElementById(id);
+let user = null, role = "user", editing = null;
+const isAdmin = () => role === "admin";
+
+/* ---- Yardımcılar (XSS'e karşı hep textContent kullanıyoruz) ---- */
+function el(tag, props = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else n.setAttribute(k, v);
+  }
+  kids.flat().forEach(c => c != null && n.append(c));
+  return n;
+}
+const safeUrl = (u) => { try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : null; } catch { return null; } };
+const fmtDate = (d) => new Date(d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+const excerpt = (t, n = 120) => !t ? "" : (t.length > n ? t.slice(0, n).trim() + "…" : t);
+$("year").textContent = new Date().getFullYear();
+
+/* ---- Reklam: boş alana tıklayınca ---- */
+document.addEventListener("click", (e) => {
+  if (!AD_URL || !safeUrl(AD_URL)) return;
+  if (isAdmin() && !ADMIN_SEES_ADS) return;
+  if (e.target.closest("a,button,input,textarea,select,label,form,.overlay,.thumb,.links")) return;
+  try {
+    const last = Number(localStorage.getItem("ad_last") || 0);
+    if (Date.now() - last < AD_COOLDOWN_SEC * 1000) return;
+    localStorage.setItem("ad_last", String(Date.now()));
+  } catch {}
+  window.open(AD_URL, "_blank", "noopener");
+});
+
+/* ---- Oturum ---- */
+async function loadRole() {
+  role = "user";
+  if (user) {
+    const { data } = await sb.from("profiles").select("role,username").eq("id", user.id).maybeSingle();
+    if (data) role = data.role;
+    $("who").textContent = (data?.username || user.email) + (role === "admin" ? " · Admin" : "");
+  } else $("who").textContent = "";
+  $("btnLogin").style.display = $("btnRegister").style.display = user ? "none" : "";
+  $("btnLogout").style.display = user ? "" : "none";
+  $("btnNew").style.display = isAdmin() ? "" : "none";
+}
+sb.auth.onAuthStateChange(async (_e, session) => {
+  user = session?.user || null;
+  await loadRole();
+  route();
+});
+
+/* ---- Giriş / Kayıt penceresi ---- */
+let mode = "login";
+function setMode(m) {
+  mode = m;
+  $("tabLogin").classList.toggle("on", m === "login");
+  $("tabReg").classList.toggle("on", m === "register");
+  $("nameWrap").style.display = m === "register" ? "" : "none";
+  $("authSubmit").textContent = m === "login" ? "Giriş yap" : "Kayıt ol";
+  $("aPass").autocomplete = m === "login" ? "current-password" : "new-password";
+  $("authMsg").className = "msg";
+}
+function openAuth(m) { setMode(m); $("authOv").classList.add("open"); }
+$("btnLogin").onclick = () => openAuth("login");
+$("btnRegister").onclick = () => openAuth("register");
+$("tabLogin").onclick = () => setMode("login");
+$("tabReg").onclick = () => setMode("register");
+$("btnLogout").onclick = async () => { await sb.auth.signOut(); location.hash = ""; };
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.closest(".overlay").classList.remove("open"));
+
+function say(id, text, ok) { const m = $(id); m.textContent = text; m.className = "msg " + (ok ? "ok" : "err"); }
+
+$("authForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const email = $("aEmail").value.trim(), password = $("aPass").value;
+  $("authSubmit").disabled = true;
+  try {
+    if (mode === "register") {
+      const username = $("aName").value.trim() || email.split("@")[0];
+      const { data, error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
+      if (error) throw error;
+      if (!data.session) say("authMsg", "Kayıt oluşturuldu. E-postana gelen doğrulama bağlantısına tıkla, sonra giriş yap.", true);
+      else $("authOv").classList.remove("open");
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      $("authOv").classList.remove("open");
+    }
+  } catch (err) {
+    const t = err.message || "Bir hata oluştu";
+    say("authMsg", /Invalid login/i.test(t) ? "E-posta veya şifre hatalı." : /already registered/i.test(t) ? "Bu e-posta zaten kayıtlı." : /not confirmed/i.test(t) ? "E-postanı doğrulaman gerekiyor." : t);
+  } finally { $("authSubmit").disabled = false; }
+};
+
+/* ---- Sayfalar ---- */
+$("logo").onclick = () => { location.hash = ""; };
+window.addEventListener("hashchange", route);
+
+async function route() {
+  const m = location.hash.match(/^#post=(.+)$/);
+  if (m) return showPost(m[1]);
+  return showList();
+}
+
+async function showList() {
+  const app = $("app");
+  app.replaceChildren(el("p", { class: "empty", text: "Yükleniyor…" }));
+  const { data, error } = await sb.from("posts").select("*").order("created_at", { ascending: false });
+  if (error) {
+    app.replaceChildren(el("p", { class: "empty", text: "Gönderiler yüklenemedi. setup.sql dosyasını Supabase'de çalıştırdın mı? (" + error.message + ")" }));
+    return;
+  }
+  if (!data.length) {
+    app.replaceChildren(el("p", { class: "empty", text: isAdmin() ? "Henüz gönderi yok. \"+ Yeni gönderi\" ile ilkini ekle." : "Henüz gönderi yok." }));
+    return;
+  }
+  const grid = el("div", { class: "grid" });
+  data.forEach(p => {
+    const img = safeUrl(p.image_url);
+    const thumb = el("a", { class: "thumb", href: "#post=" + p.id });
+    if (img) thumb.style.backgroundImage = `url("${img.replace(/"/g, "%22")}")`;
+    const actions = el("div", { class: "actions" }, el("a", { class: "btn primary", href: "#post=" + p.id, text: "İncele" }));
+    if (isAdmin()) {
+      actions.append(el("button", { text: "Düzenle", onclick: () => openPost(p) }));
+      actions.append(el("button", { class: "danger", text: "Sil", onclick: () => delPost(p) }));
+    }
+    grid.append(el("div", { class: "card" }, thumb,
+      el("div", { class: "body" },
+        el("h3", { text: p.title }),
+        el("div", { class: "muted", text: fmtDate(p.created_at) }),
+        el("div", { class: "excerpt", text: excerpt(p.content) }),
+        actions)));
+  });
+  app.replaceChildren(el("h1", { text: "Son gönderiler" }), grid);
+}
+
+async function showPost(id) {
+  const app = $("app");
+  app.replaceChildren(el("p", { class: "empty", text: "Yükleniyor…" }));
+  const { data: p, error } = await sb.from("posts").select("*").eq("id", id).maybeSingle();
+  if (error || !p) { app.replaceChildren(el("p", { class: "empty", text: "Gönderi bulunamadı." })); return; }
+  document.title = p.title + " – Oyunindir Pro";
+  const img = safeUrl(p.image_url);
+  const links = el("div", { class: "links" });
+  (Array.isArray(p.links) ? p.links : []).forEach(l => {
+    const href = safeUrl(l.url);
+    if (!href) return;
+    links.append(el("a", { href, target: "_blank", rel: "noopener noreferrer nofollow" },
+      el("span", { text: l.label || "Bağlantı" }), el("span", { text: "↗" })));
+  });
+  app.replaceChildren(
+    el("p", {}, el("a", { href: "#", text: "← Tüm gönderiler" })),
+    el("div", { class: "detail" },
+      img ? el("img", { src: img, alt: p.title }) : "",
+      el("div", { class: "inner" },
+        el("h1", { text: p.title }),
+        el("div", { class: "muted", text: fmtDate(p.created_at) }),
+        el("div", { class: "text", style: "margin-top:14px", text: p.content || "" }),
+        links)));
+}
+
+/* ---- Gönderi ekle/düzenle (sadece admin) ---- */
+function addLinkRow(label = "", url = "") {
+  const r = el("div", { class: "row" },
+    el("input", { placeholder: "Yazı (örn. İndir)", value: label, maxlength: "60" }),
+    el("input", { type: "url", placeholder: "https://...", value: url }),
+    el("button", { type: "button", text: "✕", onclick: () => r.remove() }));
+  $("linkRows").append(r);
+}
+$("addLink").onclick = () => addLinkRow();
+$("btnNew").onclick = () => openPost(null);
+
+function openPost(p) {
+  editing = p;
+  $("postTitleH").textContent = p ? "Gönderiyi düzenle" : "Yeni gönderi";
+  $("postSubmit").textContent = p ? "Kaydet" : "Yayınla";
+  $("pTitle").value = p?.title || "";
+  $("pContent").value = p?.content || "";
+  $("pImgUrl").value = p?.image_url || "";
+  $("pFile").value = "";
+  $("postMsg").className = "msg";
+  $("linkRows").replaceChildren();
+  (p?.links?.length ? p.links : [{}]).forEach(l => addLinkRow(l.label || "", l.url || ""));
+  showPrev($("pImgUrl").value);
+  $("postOv").classList.add("open");
+}
+function showPrev(src) { const i = $("pPrev"); if (src) { i.src = src; i.style.display = "block"; } else i.style.display = "none"; }
+$("pFile").onchange = () => { const f = $("pFile").files[0]; if (f) showPrev(URL.createObjectURL(f)); };
+$("pImgUrl").oninput = () => { if (!$("pFile").files[0]) showPrev(safeUrl($("pImgUrl").value) || ""); };
+
+$("postForm").onsubmit = async (e) => {
+  e.preventDefault();
+  if (!isAdmin()) return say("postMsg", "Bu işlem için admin olmalısın.");
+  $("postSubmit").disabled = true;
+  try {
+    let image_url = $("pImgUrl").value.trim();
+    if (image_url && !safeUrl(image_url)) throw new Error("Görsel bağlantısı geçerli değil.");
+    const file = $("pFile").files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) throw new Error("Görsel en fazla 5 MB olabilir.");
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const up = await sb.storage.from("post-images").upload(path, file, { contentType: file.type });
+      if (up.error) throw up.error;
+      image_url = sb.storage.from("post-images").getPublicUrl(path).data.publicUrl;
+    }
+    const links = [...$("linkRows").querySelectorAll(".row")].map(r => {
+      const [a, b] = r.querySelectorAll("input");
+      return { label: a.value.trim() || "İndir", url: b.value.trim() };
+    }).filter(l => l.url);
+    for (const l of links) if (!safeUrl(l.url)) throw new Error("Geçersiz bağlantı: " + l.url);
+
+    const row = { title: $("pTitle").value.trim(), content: $("pContent").value, image_url: image_url || null, links };
+    const res = editing
+      ? await sb.from("posts").update({ ...row, updated_at: new Date().toISOString() }).eq("id", editing.id)
+      : await sb.from("posts").insert({ ...row, author_id: user.id });
+    if (res.error) throw res.error;
+    $("postOv").classList.remove("open");
+    location.hash = ""; route();
+  } catch (err) { say("postMsg", err.message || "Kaydedilemedi"); }
+  finally { $("postSubmit").disabled = false; }
+};
+
+async function delPost(p) {
+  if (!confirm(`"${p.title}" silinsin mi?`)) return;
+  const { error } = await sb.from("posts").delete().eq("id", p.id);
+  if (error) return alert(error.message);
+  showList();
+}
+
+route();
+</script>
+</body>
+</html>
